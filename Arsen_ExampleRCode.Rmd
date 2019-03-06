@@ -1,0 +1,97 @@
+---
+title: "Arsen_ExampleRCode"
+author: "Celia Arsen"
+date: "March 4, 2019"
+output: html_document
+
+Data: Provided by Professor Daniel Hamermesh of the University of Texas at
+Austin and were used in his paper with Amy Parker, “Beauty in the Classroom: Instructors’
+Pulchritude and Putative Pedagogical Productivity,” Economics of Education Review, August
+2005, Vol. 24, No. 4, pp. 369-376. 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import teacher ratings dataset
+```{r}
+setwd("C:/Users/Celia/OneDrive - barnard.edu/Documents/Computer Science/ExampleCode")
+teacher_ratings <- read.csv("evaluation_data.csv", header = TRUE)
+```
+
+Look at some summary statistics of the dataset
+```{r}
+#variable names
+names(teacher_ratings)
+#look at rows 3 through 10 for variable 'course_eval'
+teacher_ratings$course_eval[3:10]
+#summary statistics
+mean(teacher_ratings$course_eval[teacher_ratings$female==0])
+mean(teacher_ratings$course_eval[teacher_ratings$female==1])
+```
+
+
+```{r}
+#add labels to data 
+teacher_ratings$female <- factor(teacher_ratings$female,
+  levels = c(0,1),
+  labels = c("male", "female"))
+teacher_ratings$intro <- factor(teacher_ratings$intro,
+   levels = c(0,1),
+   labels = c("non-intro", "intro"))
+
+#create a cross-tab to look at distribution of female instructors and introductory classes
+female_intro <- table(teacher_ratings$female, teacher_ratings$intro, dnn = c("gender", ""))
+female_intro
+
+#What proportion of women are teaching intro classes
+prop.table(female_intro, 1)
+```
+
+Is there a visible relationship between beauty ratings and course evaluations?
+```{r}
+#libarary(ggplot)
+
+eval.beauty.plot <- ggplot(teacher_ratings, aes(x=beauty, y=course_eval)) +
+  geom_point(alpha=.5) + 
+  geom_smooth(method='lm',formula=y~x) +
+  xlab("Beauty Rating") + 
+  ylab("Course Evaluation Rating")
+                    
+eval.beauty.plot
+```
+
+We can see that there is a slightly positive relationship between beauty and course evaluation ratings. 
+That is, teachers who had higher beauty ratings tended to have higher course evaulation ratings. 
+However, there is a lot of variance. Is this relationship statistically significant?
+```{r}
+cor.test(teacher_ratings$course_eval, teacher_ratings$beauty, use="complete.obs", method="pearson")
+```
+
+Bar chart comparing the average course evaluation rating between men and women
+```{r}
+eval.beauty.plot <- ggplot(teacher_ratings, aes(x=female, y=course_eval)) +
+  geom_bar(stat="summary", fun.y = "mean", width = 0.5, fill = "lavender", colour = "white") +
+  xlab("Gender") + 
+  ylab("Course Evaluation Rating")
+
+eval.beauty.plot
+```
+
+Are differences in male and female beauty ratings significant?
+```{r}
+t.test(teacher_ratings$course_eval ~ teacher_ratings$female)
+
+```
+
+Test if beauty has a significantly larger impact on course evaluations for women than men
+Dependent variable is course_eval
+Independent variables (with interaction) are female and beauty
+```{r}
+beauty_female_fit <- lm(course_eval ~ female*beauty, data=teacher_ratings) 
+summary(beauty_female_fit)
+
+```
+
+
